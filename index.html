@@ -83,6 +83,9 @@ svg{display:block}
 .grownups summary{font-weight:800;font-size:19px;padding:10px 0;cursor:pointer}
 .grownups p,.grownups ul{margin:0 0 12px;max-width:68ch}
 .grownups a{color:var(--harbour);font-weight:700}
+.voiceRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.voiceRow select{font:inherit;font-size:17px;padding:8px 12px;border-radius:12px;border:2px solid #9FB2C4;max-width:100%;flex:1;min-width:200px;background:#fff;color:var(--ink)}
+.voiceRow .btn{font-size:17px;padding:8px 18px}
 
 /* ---------- Shared top bar ---------- */
 .bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--harbour);color:#fff}
@@ -274,6 +277,12 @@ svg{display:block}
         <li>At the end of the sorting game, snap a screenshot of the mat, just like the photo step in the real challenge.</li>
         <li>Stickers are saved on this device only. No data is collected.</li>
       </ul>
+      <p><b>Pip's voice</b><br>Pip uses the voices built into your device, so the accent depends on what it has. You can choose a different voice here.</p>
+      <div class="voiceRow">
+        <select id="voicePick" aria-label="Pip's voice"></select>
+        <button class="btn alt" id="voiceTest">Test voice</button>
+      </div>
+      <p class="note" id="voiceNote"></p>
     </details>
   </div>
 </section>
@@ -452,7 +461,7 @@ const STICKERS = [
 ];
 const EN  = ['one','two','three','four','five','six','seven','eight','nine','ten'];
 const REO = ['tahi','rua','toru','whā','rima','ono','whitu','waru','iwa','tekau'];
-const PRAISE = ['Ka pai!','Tino pai!','Yes! Well done!','Awesome!','Great sorting!','You got it!'];
+const PRAISE = ['Ka pai!','Tino pai!','Sweet as!','Choice!','Good as gold!','Yes! Well done!','Great sorting!','You got it!'];
 
 /* ================= Helpers ================= */
 const $ = s => document.querySelector(s);
@@ -492,10 +501,49 @@ const sfx = {
 };
 
 /* ---- Voice (built-in speech) ---- */
-let voice=null;
+/* Te reo Māori words are re-spelt for the speech engine so English voices
+   say them more like a kiwi speaker would. The screen still shows the
+   correct spelling. Longer phrases come first. */
+const SAY_AS = [
+  ['te reo māori','teh reh-aw mah-aw-ree'], ['te reo','teh reh-aw'],
+  ['kia ora','kee-ah aw-rah'], ['tino pai','tee-naw pie'], ['ka pai','kah pie'],
+  ['ka mau te wehi','kah mow teh weh-hee'], ['te papa','teh pah-pah'],
+  ['māori','mah-aw-ree'], ['kororā','kaw-raw-rah'], ['pōhutukawa','paw-hoo-too-kah-wah'],
+  ['tūī','too-ee'], ['wheke','feh-keh'], ['ponga','paw-ngah'], ['tamariki','tah-mah-ree-kee'],
+  ['kaitiaki','kai-tee-ah-kee'], ['aotearoa','ah-aw-teh-ah-raw-ah'], ['papatūānuku','pah-pah-too-ah-noo-koo'],
+  ['tahi','tah-hee'], ['rua','roo-ah'], ['toru','taw-roo'], ['whā','fah'], ['rima','ree-mah'],
+  ['ono','aw-naw'], ['whitu','fee-too'], ['waru','wah-roo'], ['iwa','ee-wah'], ['tekau','teh-koe']
+].map(([w,r])=>[new RegExp('(^|[^a-zA-Zāēīōū])('+w+')(?=[^a-zA-Zāēīōū]|$)','gi'), r]);
+function speakable(t){ return SAY_AS.reduce((s,[re,r])=>s.replace(re,(m,pre)=>pre+r), t); }
+
+let voice=null, voiceList=[];
+function voiceScore(v){
+  let sc=0;
+  if(/en[-_]NZ/i.test(v.lang)) sc+=100;
+  else if(/en[-_]AU/i.test(v.lang)) sc+=60;
+  else if(/en[-_]GB/i.test(v.lang)) sc+=40;
+  else if(/^en/i.test(v.lang)) sc+=10;
+  if(/natural|neural|online|enhanced|premium/i.test(v.name)) sc+=20;
+  return sc;
+}
 function pickVoice(){
-  const vs=speechSynthesis.getVoices();
-  voice = vs.find(v=>/en[-_]NZ/i.test(v.lang)) || vs.find(v=>/en[-_]AU/i.test(v.lang)) || vs.find(v=>/en[-_]GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
+  voiceList = speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const saved = store.get('voice', null);
+  voice = voiceList.find(v=>v.voiceURI===saved) || voiceList[0] || null;
+  renderVoicePicker();
+}
+function renderVoicePicker(){
+  const sel=document.getElementById('voicePick'); if(!sel) return;
+  if(!voiceList.length){ sel.innerHTML='<option>No voices found on this device</option>'; sel.disabled=true; return; }
+  sel.disabled=false;
+  const label=v=>{ const r=(v.lang.split(/[-_]/)[1]||'').toUpperCase();
+    const place={NZ:'New Zealand',AU:'Australia',GB:'UK',US:'USA',IE:'Ireland',ZA:'South Africa',IN:'India',CA:'Canada'}[r]||r;
+    return `${v.name.replace(/^Microsoft |^Google /,'').replace(/ - English.*$/,'')} (${place})`; };
+  sel.innerHTML = voiceList.map((v,i)=>`<option value="${i}" ${v===voice?'selected':''}>${label(v)}</option>`).join('');
+  const nz = voiceList.some(v=>/en[-_]NZ/i.test(v.lang));
+  document.getElementById('voiceNote').textContent = nz
+    ? 'A New Zealand voice was found and is chosen automatically.'
+    : 'No New Zealand voice on this device, so the closest (Australian or British) is used. For a kiwi accent, try opening the game in Microsoft Edge on a computer, which usually includes the New Zealand voices Molly and Mitchell.';
 }
 const canSpeak = 'speechSynthesis' in window;
 if(canSpeak){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
@@ -504,9 +552,9 @@ function say(text){
     const est = Math.max(1200, text.length*65);
     if(!state.sound || !canSpeak){ setTimeout(res, Math.min(est,1800)); return; }
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(speakable(text));
     if(voice){ u.voice=voice; u.lang=voice.lang; } else u.lang='en-NZ';
-    u.rate=.95; u.pitch=1.2;
+    u.rate=.92; u.pitch=1.15;
     let done=false; const fin=()=>{ if(!done){ done=true; res(); } };
     u.onend=fin; u.onerror=fin; setTimeout(fin, est+2500);
     speechSynthesis.speak(u);
@@ -888,6 +936,9 @@ $$('[data-pip]').forEach(p=>p.innerHTML=PIP);
 })();
 syncSound();
 renderHome();
+renderVoicePicker();
+$('#voicePick').onchange=e=>{ voice=voiceList[+e.target.value]||voice; if(voice) store.set('voice',voice.voiceURI); say('Kia ora! I am Pip. Ka pai!'); };
+$('#voiceTest').onclick=()=>{ ac(); say('Kia ora! I am Pip, a kororā from Wellington. Tahi, rua, toru, whā, rima. Sweet as!'); };
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#win').hidden) show('home'); });
 </script>
 </body>
