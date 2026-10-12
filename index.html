@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pip's Wellington Recycling Challenge</title>
+<meta name="description" content="A recycling sorting game for tamariki aged 2 to 5, inspired by the Wellington Recycling Challenge.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#CFEFFF; --harbour:#1C6BA0; --deep:#0F4E7C; --pohutukawa:#D7263D;
+  --bush:#2E8B57; --sun:#FFC93C; --ink:#17324D; --white:#fff;
+  --font:"Baloo 2","Comic Sans MS","Chalkboard SE","Trebuchet MS",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;height:100%}
+body{font-family:var(--font);color:var(--ink);background:var(--sky);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font-family:inherit;color:inherit;touch-action:manipulation;cursor:pointer}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:4px solid var(--sun);outline-offset:3px}
+svg{display:block}
+.emo{display:block;line-height:1;font-size:1em}
+.art svg,.item svg,.mini svg,.face svg,.floaty svg,.flyer svg{width:1em;height:1em}
+
+.screen{display:none;min-height:100%;flex-direction:column}
+.screen.active{display:flex}
+
+/* ---------- Wellington scene ---------- */
+.scene{width:100%;height:100%}
+.cloud{animation:drift 26s linear infinite alternate}
+.cloud.c2{animation-duration:34s}
+@keyframes drift{from{transform:translateX(-40px)}to{transform:translateX(60px)}}
+.blades{transform-box:view-box;transform-origin:0 0;animation:spin 3.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cc{animation:cable 14s ease-in-out infinite}
+@keyframes cable{0%,8%{transform:translate(445px,300px)}46%,58%{transform:translate(175px,203px)}96%,100%{transform:translate(445px,300px)}}
+.ferry{animation:sail 18s ease-in-out infinite alternate}
+@keyframes sail{from{transform:translate(820px,362px)}to{transform:translate(960px,362px)}}
+
+/* ---------- Home ---------- */
+.hero{position:relative;height:min(46vh,380px);min-height:250px;overflow:hidden}
+.hero .scene{position:absolute;inset:0}
+.titleWrap{position:absolute;left:0;right:0;top:clamp(10px,3vh,26px);text-align:center;padding:0 12px}
+.place{display:inline-block;background:var(--harbour);color:#fff;font-weight:800;font-size:clamp(18px,3.4vw,26px);padding:2px 18px;border-radius:999px;letter-spacing:.5px}
+.bigTitle{margin:4px 0 0;font-weight:800;line-height:.95;font-size:clamp(38px,8.6vw,78px)}
+.bigTitle span{display:inline-block;text-shadow:3px 0 #fff,-3px 0 #fff,0 3px #fff,0 -3px #fff,2px 2px #fff,-2px -2px #fff,2px -2px #fff,-2px 2px #fff,0 7px 0 rgba(23,50,77,.3)}
+.bigTitle .w{white-space:nowrap;display:inline-block;margin:0 .12em}
+.homePip{position:absolute;left:clamp(8px,4vw,60px);bottom:6px;width:clamp(80px,14vw,130px);cursor:pointer;background:none;border:0;padding:0}
+.homePip:active{transform:scale(.95)}
+.homeBubble{position:absolute;left:calc(clamp(8px,4vw,60px) + clamp(80px,14vw,130px));bottom:clamp(70px,12vw,110px);background:#fff;border-radius:18px;padding:6px 14px;font-weight:700;font-size:clamp(15px,2.4vw,19px);box-shadow:0 3px 0 rgba(23,50,77,.15);max-width:220px}
+.homeBubble::before{content:"";position:absolute;left:-10px;bottom:12px;border:8px solid transparent;border-right-color:#fff}
+
+.home{max-width:920px;margin:0 auto;padding:18px 16px 40px;width:100%}
+.levelRow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.levelRow p{margin:0;font-weight:800;font-size:20px}
+.seg{display:flex;background:#fff;border-radius:26px;padding:5px;gap:4px;box-shadow:0 3px 0 rgba(23,50,77,.12)}
+.seg button{border:0;background:none;border-radius:22px;padding:6px 18px;font-weight:700;font-size:17px;display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.seg button span{white-space:nowrap}
+.seg button small{font-size:14px;font-weight:500;opacity:.85}
+@media (max-width:420px){.seg button{padding:6px 10px;font-size:16px}}
+.seg button[aria-pressed="true"]{background:var(--bush);color:#fff}
+
+.tile{display:flex;align-items:center;gap:16px;width:100%;border:0;border-radius:26px;padding:16px 20px;text-align:left;box-shadow:0 6px 0 rgba(23,50,77,.22);transition:transform .12s}
+.tile:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(23,50,77,.22)}
+.tile h3{margin:0;font-size:clamp(22px,4vw,30px);line-height:1.05}
+.tile p{margin:2px 0 0;font-size:16px;font-weight:500;line-height:1.25}
+.tile .ic{font-size:52px;line-height:1;flex:none}
+.mainTile{background:var(--harbour);color:#fff;padding:20px 22px;margin-bottom:22px;flex-wrap:wrap}
+.mainTile h3{font-size:clamp(28px,5.4vw,40px)}
+.matPreview{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.matPreview i{width:30px;height:38px;border-radius:7px;display:grid;place-items:center;font-style:normal;font-size:17px;border:2px solid rgba(255,255,255,.7)}
+.bonusHead{font-size:24px;margin:0 0 10px;font-weight:800}
+.bonus{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:22px}
+.t-red{background:var(--pohutukawa);color:#fff}
+.t-green{background:var(--bush);color:#fff}
+.t-sun{background:var(--sun)}
+.t-white{background:#fff}
+.grownups{background:#fff;border-radius:20px;padding:4px 20px;font-size:17px;line-height:1.5}
+.grownups summary{font-weight:800;font-size:19px;padding:10px 0;cursor:pointer}
+.grownups p,.grownups ul{margin:0 0 12px;max-width:68ch}
+.grownups a{color:var(--harbour);font-weight:700}
+
+/* ---------- Shared top bar ---------- */
+.bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--harbour);color:#fff}
+.bar h2{margin:0;font-size:clamp(19px,3.6vw,26px);flex:1;text-align:center;line-height:1.1}
+.round{width:52px;height:52px;border-radius:50%;border:0;background:#fff;font-size:26px;flex:none;box-shadow:0 3px 0 rgba(0,0,0,.2);display:grid;place-items:center}
+.round:active{transform:translateY(2px)}
+.musicBtn{position:relative}
+.musicBtn.off{opacity:.55}
+.musicBtn.off::after{content:"";position:absolute;left:12px;right:12px;top:50%;height:4px;background:#D7263D;border-radius:2px;transform:rotate(-40deg)}
+.progress{flex:1;display:flex;justify-content:center;gap:clamp(3px,1vw,6px)}
+.progress i{width:clamp(10px,2.2vw,16px);height:clamp(10px,2.2vw,16px);border-radius:50%;background:rgba(255,255,255,.35);transition:background .3s,transform .3s}
+.progress i.done{background:var(--sun);transform:scale(1.15)}
+.chip{background:#fff;color:var(--ink);border-radius:999px;padding:4px 14px;font-weight:800;font-size:22px;white-space:nowrap}
+
+/* ---------- Sort game ---------- */
+#sort.active{height:100vh;height:100dvh;min-height:0}
+.stage{display:flex;align-items:center;justify-content:center;gap:clamp(8px,3vw,40px);padding:10px 12px 4px;background:linear-gradient(#CFEFFF,#E9F8FF)}
+.pipWrap{display:flex;align-items:flex-end;gap:6px;max-width:44%}
+.pipWrap .pip{width:clamp(64px,12vw,110px);flex:none}
+.bubble{position:relative;background:#fff;border-radius:20px;padding:10px 14px;font-weight:700;font-size:clamp(16px,2.6vw,22px);line-height:1.2;box-shadow:0 3px 0 rgba(23,50,77,.15);margin-bottom:30px;min-height:2.6em}
+.bubble::before{content:"";position:absolute;left:-12px;bottom:14px;border:9px solid transparent;border-right-color:#fff}
+.boxWrap{position:relative;display:flex;flex-direction:column;align-items:center}
+.item{font-size:clamp(96px,19vw,150px);background:none;border:0;padding:6px;touch-action:none;position:relative;z-index:2;cursor:grab;filter:drop-shadow(0 6px 4px rgba(23,50,77,.25))}
+.item.pop{animation:popIn .45s cubic-bezier(.3,1.6,.5,1)}
+.item.lifted{opacity:.25}
+.item.gone{visibility:hidden}
+@keyframes popIn{from{transform:translateY(40px) scale(.3);opacity:0}}
+.cbox{width:clamp(130px,24vw,200px);height:clamp(34px,6vw,50px);margin-top:-30px;background:#C8955A;border-radius:6px 6px 10px 10px;position:relative;box-shadow:inset 0 -8px 0 rgba(0,0,0,.12)}
+.cbox::before{content:"";position:absolute;left:-8px;right:-8px;top:-8px;height:12px;background:#B07F48;border-radius:4px}
+.hintTap{font-size:15px;font-weight:700;opacity:.75;margin-top:4px;text-align:center}
+
+.mat{flex:1;overflow:auto;padding:12px;display:grid;gap:10px;align-content:start;
+  background-color:#fff;
+  background-image:linear-gradient(90deg,rgba(46,139,87,.28) 50%,transparent 50%),linear-gradient(rgba(46,139,87,.28) 50%,transparent 50%);
+  background-size:44px 44px;border-top:6px solid #2E8B57}
+.mat.n4{grid-template-columns:repeat(4,1fr)}
+.mat.n8{grid-auto-rows:minmax(150px,1fr)}
+@media (min-width:1051px){.mat.n8,.mat.n4{grid-auto-rows:1fr;align-content:stretch}}
+.mat.n8{grid-template-columns:repeat(8,1fr)}
+@media (max-width:1050px){.mat.n8{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:560px){.mat.n4{grid-template-columns:repeat(2,1fr)}}
+.bin{display:flex;flex-direction:column;gap:6px;border:4px solid transparent;border-radius:18px;padding:4px;background:rgba(255,255,255,.7);min-height:clamp(120px,20vh,190px);transition:transform .15s,border-color .15s}
+.bin.over{border-color:var(--c);transform:scale(1.05)}
+.bin.shake{animation:shake .45s}
+.bin.hint{animation:glow 1s ease-in-out infinite}
+@keyframes shake{20%,60%{transform:translateX(-7px) rotate(-2deg)}40%,80%{transform:translateX(7px) rotate(2deg)}}
+@keyframes glow{50%{box-shadow:0 0 0 8px var(--c);transform:scale(1.05)}}
+.chart{background:var(--c);color:var(--t);border-radius:13px;padding:6px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.num{width:26px;height:26px;border-radius:50%;background:#fff;color:var(--ink);font-weight:800;font-size:16px;display:grid;place-items:center;line-height:1}
+.bicon{font-size:clamp(28px,4.4vw,40px);line-height:1}
+.bicon svg{width:1em;height:1em}
+.bname{font-weight:800;font-size:clamp(13px,1.9vw,17px);line-height:1.05;text-align:center}
+.mat.n8 .bname{font-size:clamp(12px,1.6vw,15px)}
+.pile{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-content:flex-start}
+.mini{font-size:clamp(26px,4vw,34px);animation:popIn .35s cubic-bezier(.3,1.6,.5,1)}
+.ghost{position:fixed;z-index:70;pointer-events:none;transform:translate(-50%,-50%) scale(.85);font-size:110px;filter:drop-shadow(0 10px 8px rgba(0,0,0,.3))}
+.flyer{position:fixed;z-index:60;pointer-events:none;transition:transform .6s cubic-bezier(.5,-0.35,.6,1);display:grid;place-items:center}
+
+/* ---------- Harbour clean-up ---------- */
+#beach .sky{height:clamp(120px,22vh,200px);position:relative;overflow:hidden;flex:none}
+#beach .sky .scene{position:absolute;inset:0}
+.sea{flex:1;position:relative;overflow:hidden;min-height:320px;background:linear-gradient(#145C8F,#1E78B3 30%,#0F4E7C 82%,#F3D9A4 82%,#E8C98C)}
+.wave{position:absolute;left:0;right:0;height:14px;background:radial-gradient(circle at 10px -4px,transparent 12px,rgba(255,255,255,.18) 13px) 0 0/20px 14px repeat-x}
+.floaty{position:absolute;border:0;background:none;padding:4px;font-size:clamp(58px,10vw,86px);line-height:1}
+.floaty .bob{display:block;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-10px) rotate(6deg)}}
+.floaty.fish{animation:swim linear forwards}
+.floaty.fish.right .flip{display:block;transform:scaleX(-1)}
+@keyframes swim{from{left:var(--from)}to{left:var(--to)}}
+.floaty.happy .bob{animation:wiggle .6s}
+@keyframes wiggle{25%{transform:rotate(-20deg) scale(1.2)}75%{transform:rotate(20deg) scale(1.2)}}
+.bubbles{position:absolute;font-size:28px;pointer-events:none;animation:rise 1s ease-out forwards}
+@keyframes rise{to{transform:translateY(-70px);opacity:0}}
+
+/* ---------- Memory ---------- */
+.memWrap{flex:1;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;padding:16px;background:linear-gradient(#CFEFFF,#FFF6DA)}
+.memGrid{display:grid;gap:clamp(8px,2vw,16px);width:100%;max-width:640px}
+.memGrid.c3{grid-template-columns:repeat(3,1fr);max-width:480px}
+.memGrid.c4{grid-template-columns:repeat(4,1fr)}
+.card{aspect-ratio:3/4;border:0;padding:0;background:none;perspective:700px}
+.card .in{display:block;position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.card.up .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:16px;display:grid;place-items:center;-webkit-backface-visibility:hidden;backface-visibility:hidden;box-shadow:0 5px 0 rgba(23,50,77,.2)}
+.back{background:var(--pohutukawa);color:#fff;font-size:clamp(34px,8vw,56px);background-image:repeating-linear-gradient(-28deg,transparent 0 22px,rgba(255,255,255,.14) 22px 26px)}
+.front{background:#fff;transform:rotateY(180deg);font-size:clamp(46px,11vw,84px)}
+.card.matched .front{background:#E4F7EA;box-shadow:0 0 0 4px var(--bush)}
+
+/* ---------- Count ---------- */
+.msgBanner{background:#fff;border-radius:18px;padding:8px 18px;font-weight:700;font-size:clamp(16px,2.6vw,21px);line-height:1.25;box-shadow:0 3px 0 rgba(23,50,77,.15);text-align:center;max-width:600px;margin:0}
+.beachMsg{position:absolute;left:12px;right:12px;bottom:10px;margin:0 auto}
+.countWrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;background:linear-gradient(#CFEFFF,#E7F7EC)}
+.counter{text-align:center;min-height:120px}
+.counter b{display:block;font-size:clamp(64px,14vw,110px);line-height:1;color:var(--harbour)}
+.counter span{font-size:clamp(24px,5vw,36px);font-weight:800;color:var(--bush)}
+.cans{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(6px,2vw,16px);max-width:760px}
+.can{border:0;background:none;padding:4px;position:relative;font-size:clamp(64px,13vw,96px);height:1.25em;display:flex;align-items:flex-end}
+.can svg{width:.62em;height:1.15em;transition:transform .25s cubic-bezier(.3,1.6,.5,1);transform-origin:50% 100%}
+.can.crushed svg{transform:scale(1.25,.42)}
+.can .n{position:absolute;top:0;left:50%;transform:translateX(-50%);background:var(--sun);border-radius:999px;font-size:22px;font-weight:800;min-width:34px;padding:0 6px;line-height:34px;animation:popIn .3s}
+
+/* ---------- Stickers ---------- */
+.stickWrap{flex:1;padding:20px 16px;max-width:820px;margin:0 auto;width:100%}
+.stickWrap > p{font-size:20px;font-weight:700;text-align:center;margin:0 0 16px}
+.stickers{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+.sticker{background:#fff;border-radius:50%;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 5px 0 rgba(23,50,77,.18);border:5px solid #fff;text-align:center;padding:8px}
+.sticker .e{font-size:54px;line-height:1}
+.sticker small{font-size:15px;font-weight:800;line-height:1.1}
+.sticker.locked{background:rgba(255,255,255,.5);border:4px dashed rgba(23,50,77,.25);box-shadow:none}
+.sticker.locked .e{opacity:.3;filter:grayscale(1)}
+
+/* ---------- Win overlay ---------- */
+.overlay{position:fixed;inset:0;z-index:90;background:rgba(15,78,124,.55);display:grid;place-items:center;padding:16px}
+.overlay[hidden]{display:none}
+.winCard{background:#fff;border-radius:30px;padding:20px 24px 24px;max-width:460px;width:100%;text-align:center;box-shadow:0 10px 0 rgba(0,0,0,.2);animation:popIn .5s cubic-bezier(.3,1.6,.5,1)}
+.winCard .pip{width:120px;margin:0 auto;animation:dance .8s ease-in-out infinite alternate}
+@keyframes dance{from{transform:rotate(-8deg)}to{transform:rotate(8deg) translateY(-6px)}}
+.winCard h2{margin:6px 0 0;font-size:40px;line-height:1;color:var(--pohutukawa)}
+.winCard p{font-size:19px;margin:8px 0;line-height:1.3}
+.newSticker{display:inline-flex;align-items:center;gap:10px;background:#FFF4CC;border-radius:999px;padding:6px 18px 6px 8px;font-weight:800;font-size:18px;margin:4px 0 10px}
+.newSticker .e{font-size:40px;background:#fff;border-radius:50%;width:56px;height:56px;display:grid;place-items:center}
+.winBtns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.btn{border:0;border-radius:999px;padding:12px 22px;font-weight:800;font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.btn.go{background:var(--bush);color:#fff}
+.btn.alt{background:var(--sun)}
+.btn.plain{background:#E7EEF4}
+.note{font-size:15px!important;opacity:.8}
+
+.conf{position:fixed;top:-20px;width:11px;height:15px;z-index:95;pointer-events:none;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(800deg)}}
+
+@media (max-width:640px){
+  .bonus{grid-template-columns:1fr}
+  .bar h2{font-size:18px}
+  .pipWrap{max-width:58%}
+  .pipWrap .pip{width:54px}
+  .bubble{font-size:16px;padding:8px 10px}
+  .item{font-size:84px}
+  .cbox{width:110px}
+  .hintTap{display:none}
+  .homeBubble{font-size:14px;max-width:170px;padding:5px 10px}
+}
+.hintTap.againBtn{margin-top:6px;opacity:1;font-size:18px;padding:8px 18px}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .floaty.fish{animation-duration:12s!important}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section class="screen active" id="home">
+  <div class="hero">
+    <div id="heroScene" style="position:absolute;inset:0"></div>
+    <div class="titleWrap">
+      <span class="place">Te Whanganui-a-Tara Wellington</span>
+      <h1 class="bigTitle" id="bigTitle" aria-label="Recycling Challenge"></h1>
+    </div>
+    <button class="homePip" id="homePip" aria-label="Pip the penguin says hello"></button>
+    <div class="homeBubble" id="homeBubble">Kia ora! I'm Pip. Tap me!</div>
+  </div>
+
+  <div class="home">
+    <div class="levelRow">
+      <p>Who's playing?</p>
+      <div class="seg" role="group" aria-label="Choose level">
+        <button data-level="little"><span>🪱 Wiggly Worms</span><small>(age 2-3)</small></button>
+        <button data-level="big"><span>♻️ Bin Buddies</span><small>(age 3-4)</small></button>
+      </div>
+    </div>
+
+    <button class="tile mainTile" data-play="sort">
+      <span class="ic">♻️</span>
+      <span><h3>Sort it out!</h3><p id="mainSub">Help Pip put each thing in the right bin.</p></span>
+      <span class="matPreview" id="matPreview" aria-hidden="true"></span>
+    </button>
+
+    <h2 class="bonusHead">Bonus games</h2>
+    <div class="bonus">
+      <button class="tile t-red" data-play="beach"><span class="ic">🐟</span><span><h3>Clean the harbour</h3><p>Scoop up rubbish and say hi to the fish.</p></span></button>
+      <button class="tile t-green" data-play="memory"><span class="ic">🚋</span><span><h3>Cable car memory</h3><p>Turn the cards and find two the same.</p></span></button>
+      <button class="tile t-sun" data-play="count"><span class="ic">🥫</span><span><h3>Count the cans</h3><p>Squish and count in English and te reo Māori.</p></span></button>
+      <button class="tile t-white" data-play="stickers"><span class="ic">⭐</span><span><h3>My sticker book</h3><p id="stickSub">Win Wellington stickers.</p></span></button>
+    </div>
+
+    <details class="grownups">
+      <summary>For grown-ups</summary>
+      <p>This game is inspired by the hands-on <a href="https://www.wellingtonrecycles.co.nz/" target="_blank" rel="noopener">Wellington Recycling Challenge</a> at Kilbirnie Library, where tamariki sort real (clean) items onto a mat under eight charts: Landfill, Plastics, Metals, Paper &amp; Cardboard, Glass, Soft Plastics, Lids + Caps and Compost.</p>
+      <ul>
+        <li><b>Wiggly Worms</b> (age 2-3) uses four bins and fewer items. <b>Bin Buddies</b> (age 3-4) uses all eight charts, just like the real mat.</li>
+        <li>Pip's messages appear as text, so younger children will need a grown-up to read along. Kids can drag an item to a bin or just tap the bin. Wrong guesses are gentle: after two tries, the right bin glows.</li>
+        <li>Wellington tips used in the game: take lids off bottles and jars; rinse containers; soft plastics go to supermarket drop-off bins; caps and lids have their own collection scheme; glass goes in its own crate. Batteries never go in any bin — drop them at a library such as Kilbirnie or Karori.</li>
+        <li>At the end of the sorting game, snap a screenshot of the mat, just like the photo step in the real challenge.</li>
+        <li>Each game has its own cheerful tune. Tap 🎵 to turn the music off and 🔊 to turn the sound effects off. On iPhones and iPads, the silent switch also mutes the game.</li>
+        <li>Stickers are saved on this device only. No data is collected.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<!-- SORT -->
+<section class="screen" id="sort">
+  <header class="bar">
+    <button class="round" data-go="home" aria-label="Home">🏠</button>
+    <div class="progress" id="sortProgress" aria-label="Progress"></div>
+    <button class="round musicBtn" aria-label="Music on or off">🎵</button>
+    <button class="round soundBtn" aria-label="Sound effects on or off">🔊</button>
+  </header>
+  <div class="stage">
+    <div class="pipWrap"><div class="pip" data-pip></div><div class="bubble" id="sortBubble" aria-live="polite"></div></div>
+    <div class="boxWrap">
+      <button class="item" id="sortItem"></button>
+      <div class="cbox" aria-hidden="true"></div>
+      <div class="hintTap">Drag me or tap a bin</div>
+    </div>
+  </div>
+  <div class="mat" id="mat"></div>
+</section>
+
+<!-- BEACH -->
+<section class="screen" id="beach">
+  <header class="bar">
+    <button class="round" data-go="home" aria-label="Home">🏠</button>
+    <h2>Clean the harbour</h2>
+    <span class="chip" id="beachCount">🗑️ 0</span>
+    <button class="round musicBtn" aria-label="Music on or off">🎵</button>
+    <button class="round soundBtn" aria-label="Sound effects on or off">🔊</button>
+  </header>
+  <div class="sky"><div id="beachSky" style="position:absolute;inset:0"></div><p class="msgBanner beachMsg" id="beachMsg" aria-live="polite"></p></div>
+  <div class="sea" id="sea"><div class="wave" style="top:0"></div></div>
+</section>
+
+<!-- MEMORY -->
+<section class="screen" id="memory">
+  <header class="bar">
+    <button class="round" data-go="home" aria-label="Home">🏠</button>
+    <h2>Cable car memory</h2>
+    <button class="round musicBtn" aria-label="Music on or off">🎵</button>
+    <button class="round soundBtn" aria-label="Sound effects on or off">🔊</button>
+  </header>
+  <div class="memWrap"><p class="msgBanner" id="memMsg" aria-live="polite"></p><div class="memGrid" id="memGrid"></div></div>
+</section>
+
+<!-- COUNT -->
+<section class="screen" id="count">
+  <header class="bar">
+    <button class="round" data-go="home" aria-label="Home">🏠</button>
+    <h2>Count the cans</h2>
+    <button class="round musicBtn" aria-label="Music on or off">🎵</button>
+    <button class="round soundBtn" aria-label="Sound effects on or off">🔊</button>
+  </header>
+  <div class="countWrap">
+    <p class="msgBanner" id="countMsg" aria-live="polite"></p>
+    <div class="counter" aria-live="polite"><b id="countNum">0</b><span id="countReo">Tap a can!</span></div>
+    <div class="cans" id="cans"></div>
+  </div>
+</section>
+
+<!-- STICKERS -->
+<section class="screen" id="stickers">
+  <header class="bar">
+    <button class="round" data-go="home" aria-label="Home">🏠</button>
+    <h2>My Wellington sticker book</h2>
+    <button class="round soundBtn" aria-label="Sound effects on or off">🔊</button>
+  </header>
+  <div class="stickWrap">
+    <p id="stickMsg"></p>
+    <div class="stickers" id="stickGrid"></div>
+  </div>
+</section>
+
+<!-- WIN -->
+<div class="overlay" id="win" hidden>
+  <div class="winCard" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="pip" data-pip></div>
+    <h2 id="winTitle">Ka pai!</h2>
+    <p id="winMsg"></p>
+    <div id="winSticker"></div>
+    <div class="winBtns" id="winBtns"></div>
+  </div>
+</div>
+
+<script>
+/* ================= Art ================= */
+const PIP = `<svg viewBox="0 0 100 120" aria-hidden="true">
+  <ellipse cx="22" cy="74" rx="9" ry="22" fill="#3D6EA6" transform="rotate(20 22 74)"/>
+  <ellipse cx="78" cy="74" rx="9" ry="22" fill="#3D6EA6" transform="rotate(-20 78 74)"/>
+  <ellipse cx="50" cy="72" rx="30" ry="40" fill="#4C80BC"/>
+  <ellipse cx="50" cy="80" rx="21" ry="30" fill="#fff"/>
+  <circle cx="50" cy="34" r="24" fill="#4C80BC"/>
+  <path d="M30 40c6 10 34 10 40 0c-2 14-38 14-40 0z" fill="#fff"/>
+  <circle cx="41" cy="31" r="6" fill="#fff"/><circle cx="59" cy="31" r="6" fill="#fff"/>
+  <circle cx="42" cy="32" r="3.2" fill="#17324D"/><circle cx="58" cy="32" r="3.2" fill="#17324D"/>
+  <circle cx="43" cy="30.6" r="1.1" fill="#fff"/><circle cx="59" cy="30.6" r="1.1" fill="#fff"/>
+  <path d="M45 39 L50 48 L55 39 Z" fill="#4A4F57"/>
+  <circle cx="35" cy="42" r="4" fill="#F7A6B5" opacity=".8"/><circle cx="65" cy="42" r="4" fill="#F7A6B5" opacity=".8"/>
+  <ellipse cx="40" cy="112" rx="10" ry="5" fill="#F4A3B4"/><ellipse cx="60" cy="112" rx="10" ry="5" fill="#F4A3B4"/>
+</svg>`;
+
+const bottle = c => `<svg viewBox="0 0 100 100"><rect x="43" y="5" width="14" height="9" rx="2" fill="#C9A227"/><path d="M44 14h12v18c10 6 14 12 14 20v38a6 6 0 0 1-6 6H36a6 6 0 0 1-6-6V52c0-8 4-14 14-20z" fill="${c}"/><rect x="34" y="56" width="32" height="20" rx="3" fill="#FFF4D6"/><path d="M38 40v46" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".45"/></svg>`;
+const cap = (c,d) => `<svg viewBox="0 0 100 100"><rect x="22" y="32" width="56" height="40" rx="8" fill="${c}"/><path d="M30 38v28M38 38v28M46 38v28M54 38v28M62 38v28M70 38v28" stroke="${d}" stroke-width="3"/><rect x="20" y="26" width="60" height="12" rx="6" fill="${d}"/></svg>`;
+const can = (c,s) => `<svg viewBox="0 0 60 110"><rect x="6" y="10" width="48" height="92" rx="9" fill="${c}"/><rect x="9" y="5" width="42" height="9" rx="4" fill="#C9D3DD"/><rect x="9" y="98" width="42" height="7" rx="3" fill="#C9D3DD"/><path d="M6 46c16 9 32-9 48 0v16c-16-9-32 9-48 0z" fill="${s}"/><rect x="13" y="18" width="6" height="74" rx="3" fill="#fff" opacity=".35"/></svg>`;
+
+const ART = {
+  waterBottle:`<svg viewBox="0 0 100 100"><rect x="42" y="5" width="16" height="10" rx="2" fill="#1E6FD9"/><path d="M40 15h20v8c8 4 10 10 10 16v49a6 6 0 0 1-6 6H36a6 6 0 0 1-6-6V39c0-6 2-12 10-16z" fill="#CFEEFF" stroke="#5AA9E6" stroke-width="3"/><rect x="31" y="52" width="38" height="18" fill="#4FB3F6"/><path d="M38 42v42" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`,
+  milkBottle:`<svg viewBox="0 0 100 100"><rect x="34" y="5" width="20" height="9" rx="2" fill="#2BA84A"/><path d="M33 14h22v10l14 10v54a6 6 0 0 1-6 6H31a6 6 0 0 1-6-6V38l8-12z" fill="#fff" stroke="#9FB7C9" stroke-width="3"/><path d="M62 30c12 2 12 26 0 28" fill="none" stroke="#9FB7C9" stroke-width="5"/><rect x="29" y="56" width="36" height="22" rx="3" fill="#2F7DD1"/><text x="47" y="72" font-size="13" fill="#fff" text-anchor="middle" font-family="sans-serif" font-weight="bold">MILK</text></svg>`,
+  yoghurt:`<svg viewBox="0 0 100 100"><path d="M22 30h56l-8 60H30z" fill="#fff" stroke="#E07AA0" stroke-width="3"/><rect x="17" y="21" width="66" height="11" rx="4" fill="#E07AA0"/><circle cx="50" cy="60" r="13" fill="#F7C6D9"/><circle cx="50" cy="60" r="6" fill="#D7263D"/></svg>`,
+  sodaCan: can('#E23B3B','#fff'),
+  catTin:`<svg viewBox="0 0 100 100"><rect x="16" y="34" width="68" height="46" rx="6" fill="#B8C4D0"/><ellipse cx="50" cy="34" rx="34" ry="8" fill="#DDE4EA" stroke="#9AA8B6" stroke-width="2"/><rect x="16" y="44" width="68" height="24" fill="#F2B705"/><path d="M34 56l10-7v14zM44 56c6-9 20-9 24 0-4 9-18 9-24 0z" fill="#E36414"/><circle cx="62" cy="55" r="2" fill="#17324D"/></svg>`,
+  eggCarton:`<svg viewBox="0 0 100 100"><path d="M8 40h84l-6 12H14z" fill="#D8C8AF"/><rect x="10" y="50" width="80" height="28" rx="7" fill="#C9B79C"/><circle cx="24" cy="51" r="10" fill="#B9A586"/><circle cx="50" cy="51" r="10" fill="#B9A586"/><circle cx="76" cy="51" r="10" fill="#B9A586"/><path d="M18 70h64" stroke="#B9A586" stroke-width="3"/></svg>`,
+  greenBottle: bottle('#2E9E5B'),
+  brownBottle: bottle('#8B4A1E'),
+  jamJar:`<svg viewBox="0 0 100 100"><rect x="26" y="18" width="48" height="11" rx="3" fill="#DCEFF5" stroke="#8FB9C7" stroke-width="2"/><path d="M24 29h52v54a8 8 0 0 1-8 8H32a8 8 0 0 1-8-8z" fill="#EAF6FA" stroke="#8FB9C7" stroke-width="3"/><path d="M28 50h44v33a5 5 0 0 1-5 5H33a5 5 0 0 1-5-5z" fill="#D7263D"/><rect x="34" y="58" width="32" height="16" rx="3" fill="#FFF4D6"/><path d="M32 35v46" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9"/></svg>`,
+  chipPacket:`<svg viewBox="0 0 100 100"><path d="M26 10l4 6 4-6 4 6 4-6 4 6 4-6 4 6 4-6 4 6 4-6 4 6 4-6V90l-4-6-4 6-4-6-4 6-4-6-4 6-4-6-4 6-4-6-4 6-4-6-4 6z" fill="#FFC93C" stroke="#D99A00" stroke-width="2" stroke-linejoin="round"/><circle cx="50" cy="46" r="14" fill="#E85D04"/><path d="M38 70h24" stroke="#D7263D" stroke-width="6" stroke-linecap="round"/></svg>`,
+  breadBag:`<svg viewBox="0 0 100 100"><path d="M30 12h40l4 10v64a6 6 0 0 1-6 6H32a6 6 0 0 1-6-6V22z" fill="#EAF5FF" stroke="#8CB8DA" stroke-width="3"/><rect x="33" y="34" width="34" height="50" rx="11" fill="#E9B872"/><rect x="38" y="40" width="24" height="38" rx="8" fill="#F6D9A8"/><rect x="40" y="8" width="20" height="8" rx="3" fill="#2F7DD1"/></svg>`,
+  plasticBag:`<svg viewBox="0 0 100 100"><path d="M32 36c0-28 12-28 12 0M56 36c0-28 12-28 12 0" fill="none" stroke="#B9C7D4" stroke-width="6"/><path d="M20 34h60l-6 56H26z" fill="#F7FBFF" stroke="#B9C7D4" stroke-width="3" stroke-linejoin="round"/><path d="M38 62h24" stroke="#2BA84A" stroke-width="6" stroke-linecap="round"/></svg>`,
+  blueCap: cap('#1E6FD9','#0E4FA8'),
+  greenCap: cap('#2BA84A','#1C7A35'),
+  jarLid:`<svg viewBox="0 0 100 100"><ellipse cx="50" cy="58" rx="38" ry="16" fill="#B8862B"/><rect x="12" y="44" width="76" height="14" fill="#D4A63A"/><ellipse cx="50" cy="44" rx="38" ry="16" fill="#F0C75E"/><ellipse cx="50" cy="44" rx="25" ry="9" fill="#E3B54A"/></svg>`,
+  foamCup:`<svg viewBox="0 0 100 100"><path d="M22 18h56l-9 72H31z" fill="#FCFCFC" stroke="#BFC7CF" stroke-width="3" stroke-linejoin="round"/><g fill="#DDE3E8"><circle cx="38" cy="36" r="3"/><circle cx="56" cy="44" r="3"/><circle cx="44" cy="60" r="3"/><circle cx="60" cy="72" r="3"/><circle cx="40" cy="80" r="2.5"/></g><rect x="19" y="14" width="62" height="8" rx="4" fill="#E9EDF1"/></svg>`
+};
+
+/* ================= Data ================= */
+const CATS = {
+  landfill:{name:'Landfill',       say:'landfill',             c:'#4A4A55', t:'#fff', icon:'🗑️'},
+  plastics:{name:'Plastics',       say:'plastics',             c:'#F5B800', t:'#2A1F00', icon:'♻️'},
+  metals:  {name:'Metals',         say:'metals',               c:'#6F8499', t:'#fff', icon:'🥫'},
+  paper:   {name:'Paper & Cardboard', say:'paper and cardboard', c:'#2F7DD1', t:'#fff', icon:'📰'},
+  glass:   {name:'Glass',          say:'glass',                c:'#1F9D55', t:'#fff', icon:'🍾'},
+  soft:    {name:'Soft Plastics',  say:'soft plastics',        c:'#8E4FD6', t:'#fff', icon:'🛍️'},
+  lids:    {name:'Lids + Caps',    say:'lids and caps',        c:'#EE6A12', t:'#fff', art:'blueCap'},
+  compost: {name:'Compost',        say:'compost',              c:'#7A4E2D', t:'#fff', icon:'🪱'}
+};
+const ORDER = {
+  big:['landfill','plastics','metals','paper','glass','soft','lids','compost'],
+  little:['plastics','paper','glass','compost']
+};
+const ITEMS = [
+  {n:'banana skin',cat:'compost',e:'🍌',tip:'Banana skins go in the compost. The worms love them!'},
+  {n:'apple core',cat:'compost',e:'🍎',tip:'Apple cores turn into yummy soil for the garden.'},
+  {n:'carrot top',cat:'compost',e:'🥕',tip:'Veggie scraps go in the compost.'},
+  {n:'eggshell',cat:'compost',e:'🥚',tip:'Crunchy eggshells are great for compost.'},
+  {n:'pile of leaves',cat:'compost',e:'🍂',tip:'Leaves turn into rich soil.'},
+  {n:'orange peel',cat:'compost',e:'🍊',tip:'Fruit peel goes in the compost.'},
+  {n:'cardboard box',cat:'paper',e:'📦',tip:'Squash the box flat first!'},
+  {n:'newspaper',cat:'paper',e:'📰',tip:'Old paper can become new paper.'},
+  {n:'toilet roll',cat:'paper',e:'🧻',tip:'The cardboard tube goes in paper and cardboard.'},
+  {n:'egg carton',cat:'paper',a:'eggCarton',tip:'Egg cartons are made of cardboard.'},
+  {n:'envelope',cat:'paper',e:'✉️',tip:'Paper envelopes can be recycled.'},
+  {n:'water bottle',cat:'plastics',a:'waterBottle',tip:'Take the lid off first, then recycle the bottle.'},
+  {n:'milk bottle',cat:'plastics',a:'milkBottle',tip:'Give it a rinse and take the lid off.'},
+  {n:'yoghurt pottle',cat:'plastics',a:'yoghurt',tip:'Give the pottle a rinse first.'},
+  {n:'shampoo bottle',cat:'plastics',e:'🧴',tip:'Empty bottles go in plastics.'},
+  {n:'tin can',cat:'metals',e:'🥫',tip:'Rinse the tin, then recycle it.'},
+  {n:'fizzy drink can',cat:'metals',a:'sodaCan',tip:'Old cans can be made into new cans!'},
+  {n:'cat food tin',cat:'metals',a:'catTin',tip:'Metal tins go in metals.'},
+  {n:'green bottle',cat:'glass',a:'greenBottle',tip:"Glass goes in its own crate so it doesn't break."},
+  {n:'sauce bottle',cat:'glass',a:'brownBottle',tip:'Glass can be melted and made again and again.'},
+  {n:'jam jar',cat:'glass',a:'jamJar',tip:'Take the lid off the jar first.'},
+  {n:'chip packet',cat:'soft',a:'chipPacket',tip:'Scrunchy packets go to the soft plastics bin at the supermarket.'},
+  {n:'bread bag',cat:'soft',a:'breadBag',tip:'Bread bags are soft plastic.'},
+  {n:'plastic bag',cat:'soft',a:'plasticBag',tip:'If you can scrunch it into a ball, it is soft plastic.'},
+  {n:'bottle cap',cat:'lids',a:'blueCap',tip:'Little lids get their own special box.'},
+  {n:'milk bottle lid',cat:'lids',a:'greenCap',tip:'Lids are too small for the recycling bin.'},
+  {n:'jar lid',cat:'lids',a:'jarLid',tip:'Metal lids go in the lids box too.'},
+  {n:'old toothbrush',cat:'landfill',e:'🪥',tip:"Old toothbrushes can't be recycled, so they go to landfill."},
+  {n:'broken crayon',cat:'landfill',e:'🖍️',tip:'Broken crayons go in the rubbish.'},
+  {n:'foam cup',cat:'landfill',a:'foamCup',tip:"Foam cups can't be recycled. Bring your own cup next time!"},
+  {n:'broken toy',cat:'landfill',e:'🧸',tip:'Broken toys go in the rubbish. Toys that still work can be given away!'}
+];
+ITEMS.forEach((it,i)=>it.id=i);
+
+const STICKERS = [
+  {e:'🚋',n:'Cable car'},{e:'🐧',n:'Kororā'},{e:'🌺',n:'Pōhutukawa'},{e:'⛴️',n:'Ferry'},
+  {e:'🌬️',n:'Windy Welly'},{e:'🦭',n:'Red Rocks seal'},{e:'🌿',n:'Ponga fern'},{e:'🏛️',n:'Te Papa'},
+  {e:'🐦',n:'Tūī'},{e:'🏖️',n:'Oriental Bay'},{e:'⛰️',n:'Mount Victoria'},{e:'🐙',n:'Wheke'}
+];
+const EN  = ['one','two','three','four','five','six','seven','eight','nine','ten'];
+const REO = ['tahi','rua','toru','whā','rima','ono','whitu','waru','iwa','tekau'];
+const PRAISE = ['Ka pai!','Tino pai!','Sweet as!','Choice!','Good as gold!','Yes! Well done!','Great sorting!','You got it!'];
+
+/* ================= Helpers ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rand = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; };
+const art = it => it.e ? `<span class="emo">${it.e}</span>` : ART[it.a];
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem('wrc_'+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('wrc_'+k,JSON.stringify(v)); }catch(e){} }
+};
+const state = { level:store.get('level','little'), sound:store.get('sound',true), music:store.get('music',true), stickers:store.get('stickers',0) };
+
+/* ---- Sound effects (Web Audio, no files needed) ---- */
+let actx;
+function ac(){
+  if(!actx){ const C=window.AudioContext||window.webkitAudioContext; if(C) actx=new C(); }
+  if(actx && actx.state==='suspended') actx.resume();
+  return actx;
+}
+function tone(f,dur=.15,type='sine',when=0,vol=.2,slide){
+  if(!state.sound) return; const a=ac(); if(!a) return;
+  const t=a.currentTime+when, o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t); if(slide) o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.05);
+}
+const sfx = {
+  good(){ [523,659,784,1047].forEach((f,i)=>tone(f,.18,'triangle',i*.08,.17)); },
+  oops(){ tone(330,.35,'sine',0,.18,160); },
+  pop(){ tone(500,.09,'square',0,.07,1300); },
+  blub(){ tone(380,.12,'sine',0,.16,900); tone(520,.12,'sine',.1,.13,1200); },
+  crunch(){ tone(200,.14,'sawtooth',0,.1,55); tone(900,.05,'square',.02,.04,300); },
+  flip(){ tone(720,.06,'triangle',0,.1); },
+  win(){ [523,587,659,784,659,784,1047].forEach((f,i)=>tone(f,.22,'triangle',i*.12,.17)); }
+};
+
+/* ---- Background music (made with Web Audio, no files needed) ---- */
+// Each tune is 32 eighth-notes long (MIDI note numbers, 0 = rest) and loops.
+const TUNES = {
+  sort:   { bpm:120, inst:'marimba', drum:true,
+    mel:[76,0,79,0,81,79,76,0, 74,0,76,0,72,0,0,0, 76,0,79,0,81,84,81,79, 76,0,74,0,72,0,0,0],
+    bass:[48,0,0,0,55,0,0,0, 43,0,0,0,50,0,0,0, 41,0,0,0,48,0,0,0, 43,0,0,0,48,0,0,0] },
+  beach:  { bpm:92, inst:'flute', drum:false,
+    mel:[72,0,0,76,0,0,79,0, 77,0,0,76,0,0,74,0, 72,0,0,76,0,0,79,0, 81,0,79,0,76,0,0,0],
+    bass:[48,0,0,0,52,0,0,0, 50,0,0,0,53,0,0,0, 48,0,0,0,52,0,0,0, 41,0,0,0,48,0,0,0] },
+  memory: { bpm:104, inst:'musicbox', drum:false,
+    mel:[84,0,79,0,76,0,79,0, 81,0,77,0,74,0,77,0, 79,0,76,0,72,0,76,0, 74,0,79,0,72,0,0,0],
+    bass:[48,0,0,0,55,0,0,0, 41,0,0,0,45,0,0,0, 48,0,0,0,55,0,0,0, 43,0,0,0,48,0,0,0] },
+  count:  { bpm:112, inst:'marimba', drum:true,
+    mel:[72,0,72,0,79,0,79,0, 81,0,81,0,79,0,0,0, 77,0,77,0,76,0,76,0, 74,0,74,0,72,0,0,0],
+    bass:[48,0,55,0,48,0,55,0, 41,0,48,0,48,0,55,0, 41,0,48,0,48,0,55,0, 43,0,50,0,48,0,0,0] }
+};
+const Music = { name:null, timer:null, gain:null, step:0, next:0, noise:null };
+const hz = m => 440*Math.pow(2,(m-69)/12);
+function mNote(m, t, dur, type, vol, mult=1){
+  const a=actx, o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(hz(m)*mult, t);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.012); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(Music.gain); o.start(t); o.stop(t+dur+.05);
+}
+function playInst(inst, m, t){
+  if(inst==='marimba'){ mNote(m,t,.35,'sine',.32); mNote(m,t,.08,'sine',.07,4); }
+  else if(inst==='musicbox'){ mNote(m,t,.7,'triangle',.22); mNote(m,t,.4,'sine',.08,2); }
+  else { mNote(m,t,.55,'sine',.26); mNote(m,t,.5,'triangle',.05,2); }
+}
+function drum(t, strong){
+  const a=actx;
+  if(!Music.noise){ const b=a.createBuffer(1,a.sampleRate*.1,a.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; Music.noise=b; }
+  const n=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain();
+  n.buffer=Music.noise; f.type='highpass'; f.frequency.value=strong?1800:4000;
+  g.gain.setValueAtTime(strong?.12:.06,t); g.gain.exponentialRampToValueAtTime(.0001,t+.06);
+  n.connect(f).connect(g).connect(Music.gain); n.start(t); n.stop(t+.08);
+}
+function musicTick(){
+  const a=actx, T=TUNES[Music.name]; if(!a||!T) return;
+  const step=60/T.bpm/2;
+  while(Music.next < a.currentTime+.2){
+    const i=Music.step % T.mel.length, t=Music.next;
+    if(T.mel[i]) playInst(T.inst, T.mel[i], t);
+    if(T.bass[i]){ mNote(T.bass[i],t,.4,'triangle',.3); }
+    if(T.drum && i%2===0) drum(t, i%4===0);
+    Music.next+=step; Music.step++;
+  }
+}
+function musicStart(name){
+  if(!state.music || !TUNES[name]){ musicStop(); return; }
+  const a=ac(); if(!a) return;
+  if(Music.name===name && Music.timer){ musicVolume(1); return; }
+  musicStop(true);
+  Music.gain=a.createGain(); Music.gain.gain.setValueAtTime(.0001,a.currentTime);
+  Music.gain.connect(a.destination);
+  Music.name=name; Music.step=0; Music.next=a.currentTime+.15;
+  musicVolume(1);
+  Music.timer=setInterval(musicTick,40); musicTick();
+}
+function musicVolume(level){
+  if(!Music.gain||!actx) return; const g=Music.gain.gain, t=actx.currentTime;
+  g.cancelScheduledValues(t); g.setValueAtTime(Math.max(g.value,.0001),t); g.linearRampToValueAtTime(.16*level+.0001,t+.5);
+}
+function musicStop(now){
+  if(Music.timer){ clearInterval(Music.timer); Music.timer=null; }
+  const g=Music.gain; Music.gain=null; Music.name=null;
+  if(g && actx){ const t=actx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(0,t+(now?.05:.4)); setTimeout(()=>g.disconnect(),(now?100:500)); }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) musicStop(true); else if(current in TUNES) musicStart(current); });
+function syncMusic(){ $$('.musicBtn').forEach(b=>{ b.classList.toggle('off',!state.music); b.setAttribute('aria-pressed',String(state.music)); }); }
+
+/* ---- Pip's messages (text only) ---- */
+const MSG = { home:'#homeBubble', sort:'#sortBubble', beach:'#beachMsg', memory:'#memMsg', count:'#countMsg' };
+function say(text){
+  const sel = MSG[current], el = sel && document.querySelector(sel);
+  if(el) el.textContent = text;
+  // give grown-ups time to read the message aloud before the game moves on
+  return new Promise(res=>setTimeout(res, Math.max(1600, Math.min(text.length*50, 3800))));
+}
+
+/* ---- Fly an item to a target ---- */
+function fly(html, from, toEl){
+  return new Promise(res=>{
+    if(reduceMotion()){ res(); return; }
+    const s = Math.min(from.width, from.height);
+    const g = document.createElement('div');
+    g.className='flyer'; g.innerHTML=html;
+    Object.assign(g.style,{left:from.left+'px',top:from.top+'px',width:s+'px',height:s+'px',fontSize:(s*.9)+'px'});
+    document.body.append(g);
+    const t = toEl.getBoundingClientRect();
+    const dx = t.left+t.width/2-(from.left+s/2), dy = t.top+t.height/2-(from.top+s/2);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ g.style.transform=`translate(${dx}px,${dy}px) scale(.25)`; }));
+    setTimeout(()=>{ g.remove(); res(); }, 640);
+  });
+}
+
+function confetti(){
+  if(reduceMotion()) return;
+  const cols=['#D7263D','#FFC93C','#2E8B57','#2F7DD1','#8E4FD6','#EE6A12','#fff'];
+  for(let i=0;i<80;i++){
+    const d=document.createElement('i'); d.className='conf';
+    d.style.left=Math.random()*100+'vw'; d.style.background=cols[i%cols.length];
+    d.style.animationDuration=(2+Math.random()*1.6)+'s'; d.style.animationDelay=(Math.random()*.6)+'s';
+    document.body.append(d); setTimeout(()=>d.remove(),4500);
+  }
+}
+
+/* ================= Wellington scene ================= */
+function scene(id){
+  const houses = [[40,226,'#F2B705'],[78,214,'#fff'],[120,206,'#D7263D'],[200,204,'#7FC8F8'],[250,212,'#fff'],[300,222,'#F28C28'],[350,244,'#fff'],[395,268,'#F2B705'],[60,262,'#7FC8F8'],[160,248,'#fff'],[230,256,'#F28C28'],[290,272,'#D7263D'],[110,292,'#fff'],[200,300,'#F2B705']];
+  const hs = houses.map(([x,y,c])=>`<g transform="translate(${x} ${y})"><rect x="-10" y="0" width="20" height="14" fill="${c}"/><path d="M-13 1 L0 -10 L13 1Z" fill="#8B3A3A"/><rect x="-3" y="6" width="6" height="8" fill="#4A6B8A"/></g>`).join('');
+  const city = [[640,250,40,'#F4E6C8'],[690,230,34,'#DCE9F2'],[730,262,46,'#fff'],[784,240,30,'#CFE0EE'],[820,270,40,'#F7D9C4'],[866,252,36,'#E3ECF4']]
+    .map(([x,y,w,c])=>`<rect x="${x}" y="${y}" width="${w}" height="${345-y}" fill="${c}" stroke="#9FB2C4" stroke-width="2"/>`+
+      Array.from({length:Math.floor((340-y)/16)},(_,k)=>`<rect x="${x+6}" y="${y+8+k*16}" width="${w-12}" height="5" fill="#9FC3DE"/>`).join('')).join('');
+  return `<svg class="scene" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD3FF"/><stop offset="1" stop-color="#E4F6FF"/></linearGradient>
+    <linearGradient id="sea${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A8BC9"/><stop offset="1" stop-color="#145C8F"/></linearGradient>
+  </defs>
+  <rect width="1200" height="420" fill="url(#sky${id})"/>
+  <circle cx="1080" cy="78" r="44" fill="#FFD84D"/>
+  <g class="cloud"><ellipse cx="190" cy="78" rx="60" ry="22" fill="#fff"/><ellipse cx="232" cy="64" rx="40" ry="24" fill="#fff"/><ellipse cx="150" cy="68" rx="30" ry="18" fill="#fff"/></g>
+  <g class="cloud c2"><ellipse cx="740" cy="58" rx="50" ry="18" fill="#fff"/><ellipse cx="770" cy="46" rx="32" ry="20" fill="#fff"/></g>
+  <path d="M0 250 C140 196 240 214 340 232 C470 176 570 206 660 222 C770 160 880 140 960 168 C1050 200 1130 186 1200 206 V420 H0Z" fill="#83C192"/>
+  <g transform="translate(940 158)">
+    <path d="M-3 0 L-6 76 H6 L3 0Z" fill="#fff"/>
+    <g class="blades"><path d="M0 0 L-4 -46 L0 -52 L4 -46Z" fill="#fff"/><path d="M0 0 L-4 -46 L0 -52 L4 -46Z" fill="#fff" transform="rotate(120)"/><path d="M0 0 L-4 -46 L0 -52 L4 -46Z" fill="#fff" transform="rotate(240)"/><circle r="5" fill="#DDE6EC"/></g>
+  </g>
+  <path d="M0 214 C100 190 210 184 310 206 C400 226 470 276 540 345 H0Z" fill="#3F9A5E"/>
+  ${hs}
+  <path d="M150 196 L470 312" stroke="#7A5233" stroke-width="5"/>
+  <g class="cc"><g transform="rotate(19.8)"><rect x="-26" y="-30" width="52" height="26" rx="5" fill="#C8102E"/><rect x="-21" y="-25" width="12" height="10" rx="2" fill="#CFEFFF"/><rect x="-6" y="-25" width="12" height="10" rx="2" fill="#CFEFFF"/><rect x="9" y="-25" width="12" height="10" rx="2" fill="#CFEFFF"/><rect x="-26" y="-8" width="52" height="5" fill="#8A0B20"/></g></g>
+  <rect x="520" y="330" width="680" height="18" fill="#B9C3BC"/>
+  ${city}
+  <g transform="translate(575 345)">
+    <rect x="-44" y="-12" width="88" height="12" fill="#BFC6CE"/>
+    <rect x="-36" y="-56" width="72" height="44" rx="4" fill="#ECEFF2"/>
+    <path d="M-36 -48h72M-36 -40h72M-36 -32h72M-36 -24h72M-36 -16h72" stroke="#7D8A98" stroke-width="3"/>
+    <rect x="-28" y="-68" width="56" height="12" rx="3" fill="#DDE2E7"/>
+    <path d="M-30 -66 Q0 -80 30 -66Z" fill="#C9D0D7"/>
+  </g>
+  <rect x="0" y="345" width="1200" height="75" fill="url(#sea${id})"/>
+  <path d="M0 362 q30 -8 60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0" stroke="#fff" stroke-width="3" fill="none" opacity=".35"/>
+  <g class="ferry"><path d="M-60 0 H60 L50 18 H-50Z" fill="#fff"/><rect x="-60" y="4" width="120" height="5" fill="#1C6BA0"/><rect x="-40" y="-16" width="70" height="16" rx="3" fill="#fff"/><rect x="-34" y="-12" width="58" height="5" fill="#1C6BA0"/><rect x="8" y="-28" width="10" height="12" fill="#D7263D"/></g>
+  <g transform="translate(1138 340)">
+    <path d="M-6 0 L-4 -46 H4 L6 0Z" fill="#6B4226"/>
+    <circle cx="-26" cy="-58" r="24" fill="#2C6E3F"/><circle cx="20" cy="-62" r="28" fill="#2C6E3F"/><circle cx="-2" cy="-86" r="26" fill="#357F4A"/>
+    <g fill="#E0303F"><circle cx="-34" cy="-66" r="5"/><circle cx="-14" cy="-50" r="5"/><circle cx="8" cy="-92" r="5"/><circle cx="28" cy="-70" r="5"/><circle cx="-8" cy="-74" r="4"/><circle cx="36" cy="-50" r="5"/><circle cx="-26" cy="-92" r="4"/></g>
+  </g>
+</svg>`;
+}
+
+/* ================= Navigation ================= */
+let current='home';
+function show(id){
+  current=id;
+  $$('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
+  $('#win').hidden=true;
+  window.scrollTo(0,0);
+  stopBeach();
+  musicStart(id);
+  if(id==='home') renderHome();
+}
+document.addEventListener('click', e=>{
+  const go=e.target.closest('[data-go]'); if(go){ show(go.dataset.go); return; }
+  const play=e.target.closest('[data-play]'); if(play){ ac(); START[play.dataset.play](); return; }
+  const mus=e.target.closest('.musicBtn'); if(mus){ state.music=!state.music; store.set('music',state.music); syncMusic(); if(state.music) musicStart(current); else musicStop(); return; }
+  const snd=e.target.closest('.soundBtn'); if(snd){ state.sound=!state.sound; store.set('sound',state.sound); syncSound(); }
+});
+function syncSound(){ $$('.soundBtn').forEach(b=>{ b.textContent = state.sound?'🔊':'🔇'; b.setAttribute('aria-pressed', String(state.sound)); }); }
+
+/* ================= Win overlay & stickers ================= */
+function earnSticker(){
+  state.stickers++; store.set('stickers',state.stickers);
+  return STICKERS[(state.stickers-1)%STICKERS.length];
+}
+function win({title='Ka pai!', msg, speak, again, extra}){
+  sfx.win(); confetti(); musicVolume(.35);
+  const st = earnSticker();
+  $('#winTitle').textContent=title;
+  $('#winMsg').textContent=msg;
+  $('#winSticker').innerHTML = `<div class="newSticker"><span class="e">${st.e}</span>New sticker: ${st.n}</div>`;
+  const btns = $('#winBtns'); btns.innerHTML='';
+  const mk=(label,cls,fn)=>{ const b=document.createElement('button'); b.className='btn '+cls; b.textContent=label; b.onclick=fn; btns.append(b); return b; };
+  if(extra) mk(extra.label,'alt',extra.fn);
+  mk('Play again','go',()=>{ $('#win').hidden=true; again(); });
+  mk('Home','plain',()=>show('home'));
+  $('#win').hidden=false;
+  btns.firstChild.focus();
+}
+
+/* ================= HOME ================= */
+function renderHome(){
+  $$('.seg button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.level===state.level)));
+  const cats = ORDER[state.level];
+  $('#matPreview').innerHTML = cats.map(k=>`<i style="background:${CATS[k].c}">${CATS[k].icon||'🔵'}</i>`).join('');
+  $('#mainSub').textContent = `Help Pip put each thing in the right bin. ${cats.length} bins to choose from.`;
+  $('#stickSub').textContent = `${Math.min(state.stickers,STICKERS.length)} of ${STICKERS.length} Wellington stickers found.`;
+}
+$$('.seg button').forEach(b=>b.onclick=()=>{ state.level=b.dataset.level; store.set('level',state.level); sfx.pop(); renderHome();
+});
+$('#homePip').onclick = ()=>{ ac(); sfx.blub(); say("Kia ora! I'm Pip, a little blue penguin. I live in Wellington harbour. Will you help me keep it clean?"); };
+
+/* ================= MAIN GAME: SORT IT OUT ================= */
+let S=null, drag=null, ghost=null;
+const itemEl = $('#sortItem'), bubble=$('#sortBubble');
+
+function buildDeck(cats){
+  let deck=[];
+  if(state.level==='little'){
+    cats.forEach(c=>deck.push(...shuffle(ITEMS.filter(i=>i.cat===c)).slice(0,2)));
+  } else {
+    cats.forEach(c=>deck.push(rand(ITEMS.filter(i=>i.cat===c))));
+    deck.push(...shuffle(ITEMS.filter(i=>!deck.includes(i))).slice(0,4));
+  }
+  return shuffle(deck);
+}
+function startSort(){
+  const cats = ORDER[state.level];
+  const mat=$('#mat'); mat.className='mat n'+cats.length;
+  mat.innerHTML = cats.map((k,i)=>{ const c=CATS[k];
+    return `<button class="bin" data-cat="${k}" style="--c:${c.c};--t:${c.t}" aria-label="${c.name}">
+      <span class="chart"><span class="num">${i+1}</span><span class="bicon">${c.icon?c.icon:ART[c.art]}</span><span class="bname">${c.name}</span></span>
+      <span class="pile"></span></button>`; }).join('');
+  $$('#mat .bin').forEach(b=>b.onclick=()=>choose(b.dataset.cat));
+  S = { cats, deck:buildDeck(cats), i:0, wrong:0, busy:false };
+  const ht=$('.hintTap'); if(ht && ht.tagName==='BUTTON') ht.outerHTML='<div class="hintTap">Drag me or tap a bin</div>';
+  $('#sortProgress').innerHTML = S.deck.map(()=>'<i></i>').join('');
+  show('sort');
+  nextItem(true);
+}
+function nextItem(first){
+  const it=S.deck[S.i]; S.wrong=0;
+  $$('#mat .bin').forEach(b=>b.classList.remove('hint'));
+  itemEl.innerHTML=art(it); itemEl.setAttribute('aria-label', it.n+'. Tap to hear its name.');
+  itemEl.classList.remove('gone','pop'); void itemEl.offsetWidth; itemEl.classList.add('pop');
+  const q=`Where does the ${it.n} go?`;
+  bubble.textContent=q;
+  say(first ? `Kia ora! Let's sort the rubbish, just like the challenge at Kilbirnie Library. ${q}` : q);
+}
+function choose(cat, fromRect){
+  if(!S || S.busy) return;
+  const it=S.deck[S.i], bin=$(`#mat .bin[data-cat="${cat}"]`);
+  if(cat===it.cat){
+    S.busy=true; sfx.good();
+    const from = fromRect || itemEl.getBoundingClientRect();
+    itemEl.classList.add('gone');
+    const pile=bin.querySelector('.pile');
+    fly(art(it), from, pile).then(()=>{ const m=document.createElement('span'); m.className='mini'; m.title=it.n; m.innerHTML=art(it); pile.append(m); });
+    $$('#sortProgress i')[S.i].classList.add('done');
+    const p=rand(PRAISE), line=`${p} ${it.tip}`;
+    bubble.textContent=line;
+    say(line).then(()=>setTimeout(()=>{
+      S.i++; S.busy=false;
+      if(S.i>=S.deck.length) finishSort(); else nextItem();
+    }, 350));
+  } else {
+    S.wrong++; sfx.oops();
+    bin.classList.remove('shake'); void bin.offsetWidth; bin.classList.add('shake');
+    let line;
+    if(S.wrong>=2){ $(`#mat .bin[data-cat="${it.cat}"]`).classList.add('hint'); line=`Look, the glowing bin! The ${it.n} goes in ${CATS[it.cat].say}.`; }
+    else line=`Hmm, not ${CATS[cat].say}. Try again!`;
+    bubble.textContent=line; say(line);
+  }
+}
+function finishSort(){
+  const n=S.deck.length;
+  win({
+    msg:`You sorted all ${n} things! The worms, the fish and the penguins say thank you.`,
+    speak:`Ka pai! You sorted all ${n} things!`,
+    again:startSort,
+    extra:{label:'See my mat', fn:()=>{ $('#win').hidden=true; bubble.textContent='Look at your mat! Grown-ups can take a photo, just like the real challenge.'; itemEl.innerHTML='<span class="emo">📸</span>'; itemEl.classList.remove('gone');
+      $('.hintTap').outerHTML='<button class="btn go againBtn hintTap" style="display:block">Play again</button>'; $('.againBtn').onclick=startSort; }}
+  });
+}
+// drag and drop
+function binAt(x,y){ const el=document.elementFromPoint(x,y); return el && el.closest('#mat .bin'); }
+function clearOver(){ $$('#mat .bin.over').forEach(b=>b.classList.remove('over')); }
+itemEl.addEventListener('pointerdown', e=>{
+  if(!S || S.busy || S.i>=S.deck.length) return;
+  ac(); drag={x:e.clientX,y:e.clientY,on:false};
+  itemEl.setPointerCapture(e.pointerId);
+});
+itemEl.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  if(!drag.on && Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>10){
+    drag.on=true; ghost=document.createElement('div'); ghost.className='ghost'; ghost.innerHTML=art(S.deck[S.i]);
+    document.body.append(ghost); itemEl.classList.add('lifted');
+  }
+  if(drag.on){
+    ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px';
+    clearOver(); const b=binAt(e.clientX,e.clientY); if(b) b.classList.add('over');
+  }
+});
+function endDrag(e, cancel){
+  if(!drag) return; const d=drag; drag=null;
+  if(d.on){
+    const b = cancel ? null : binAt(e.clientX,e.clientY);
+    const r = ghost.getBoundingClientRect(); ghost.remove(); ghost=null;
+    itemEl.classList.remove('lifted'); clearOver();
+    if(b) choose(b.dataset.cat, r);
+  } else if(!cancel){
+    const it=S.deck[S.i]; say(`It's a ${it.n}! Which bin?`);
+  }
+}
+itemEl.addEventListener('pointerup', e=>endDrag(e,false));
+itemEl.addEventListener('pointercancel', e=>endDrag(e,true));
+
+/* ================= BONUS 1: CLEAN THE HARBOUR ================= */
+let B=null;
+const RUBBISH = ITEMS.filter(i=>['plastics','metals','soft','lids'].includes(i.cat) || i.a==='foamCup');
+const CRITTERS = ['🐟','🐠','🐡','🦀','🐙'];
+const FISH_LINES = ['Hello fish!','Kia ora, little fish!','Blub blub!','Swim, fish, swim!','That one is a fish. Fish stay in the sea!'];
+function startBeach(){
+  show('beach');
+  $('#beachSky').innerHTML = scene('b');
+  const sea=$('#sea'); sea.querySelectorAll('.floaty,.bubbles').forEach(n=>n.remove());
+  B={got:0, goal: state.level==='little'?6:10, timer:null, lastFish:0};
+  $('#beachCount').textContent=`🗑️ 0 / ${B.goal}`;
+  say('Oh no! There is rubbish in Wellington harbour. Tap the rubbish to scoop it up. Leave the fish swimming!');
+  for(let k=0;k<3;k++) spawn(false);
+  spawn(true);
+  B.timer=setInterval(()=>{ if(!B) return;
+    const sea=$('#sea'); const junk=sea.querySelectorAll('.floaty:not(.fish)').length, fish=sea.querySelectorAll('.fish').length;
+    if(junk<4 && B.got+junk<B.goal) spawn(false);
+    if(fish<2 && Math.random()<.5) spawn(true);
+  }, 1200);
+}
+function spawn(isFish){
+  const sea=$('#sea'), el=document.createElement('button');
+  el.className='floaty'+(isFish?' fish':'');
+  el.style.top = (6+Math.random()*58)+'%';
+  if(isFish){
+    const right=Math.random()<.5; if(right) el.classList.add('right');
+    el.style.setProperty('--from', right?'-20%':'105%'); el.style.setProperty('--to', right?'105%':'-20%');
+    el.style.animationDuration=(9+Math.random()*5)+'s';
+    el.innerHTML=`<span class="bob"><span class="flip">${rand(CRITTERS)}</span></span>`;
+    el.setAttribute('aria-label','A sea creature');
+    el.addEventListener('animationend', ev=>{ if(ev.target===el) el.remove(); });
+    el.onclick=()=>{ sfx.blub(); el.classList.remove('happy'); void el.offsetWidth; el.classList.add('happy');
+      bubbles(el); if(Date.now()-B.lastFish>1800){ B.lastFish=Date.now(); say(rand(FISH_LINES)); } };
+  } else {
+    const it=rand(RUBBISH);
+    el.style.left=(4+Math.random()*78)+'%';
+    el.innerHTML=`<span class="bob" style="animation-delay:-${Math.random()*2}s">${art(it)}</span>`;
+    el.setAttribute('aria-label', it.n);
+    el.onclick=()=>collect(el,it);
+  }
+  sea.append(el);
+}
+function bubbles(el){
+  const r=el.getBoundingClientRect(), s=$('#sea').getBoundingClientRect();
+  const b=document.createElement('span'); b.className='bubbles'; b.textContent='🫧';
+  b.style.left=(r.left-s.left+r.width/2)+'px'; b.style.top=(r.top-s.top)+'px';
+  $('#sea').append(b); setTimeout(()=>b.remove(),1000);
+}
+function collect(el,it){
+  if(!B || el.disabled) return; el.disabled=true; sfx.pop();
+  const r=el.getBoundingClientRect(); el.remove();
+  B.got++; $('#beachCount').textContent=`🗑️ ${B.got} / ${B.goal}`;
+  fly(art(it), r, $('#beachCount'));
+  if(B.got>=B.goal){
+    stopBeach(true);
+    setTimeout(()=>win({ msg:'The harbour is sparkling clean. The fish and the kororā are so happy!',
+      speak:'Ka pai! Wellington harbour is clean!', again:startBeach }), 500);
+  } else {
+    say(`Scooped up a ${it.n}!`);
+  }
+}
+function stopBeach(keep){ if(B && B.timer){ clearInterval(B.timer); B.timer=null; } if(!keep) B=B&&current==='beach'?B:null; }
+
+/* ================= BONUS 2: CABLE CAR MEMORY ================= */
+let M=null;
+function startMemory(){
+  show('memory');
+  const pairs = state.level==='little'?3:6;
+  const picks = shuffle(ITEMS).slice(0,pairs);
+  const cards = shuffle([...picks,...picks]);
+  const g=$('#memGrid'); g.className='memGrid '+(state.level==='little'?'c3':'c4');
+  g.innerHTML = cards.map((it,i)=>`<button class="card" data-id="${it.id}" aria-label="Card ${i+1}, face down">
+    <span class="in"><span class="face back">🚋</span><span class="face front">${art(it)}</span></span></button>`).join('');
+  M={first:null, lock:false, matched:0, pairs};
+  $$('#memGrid .card').forEach(c=>c.onclick=()=>flip(c));
+  say('Turn over the cable car cards. Can you find two the same?');
+}
+function flip(c){
+  if(!M || M.lock || c.classList.contains('up')) return;
+  const it=ITEMS[+c.dataset.id];
+  c.classList.add('up'); c.setAttribute('aria-label', it.n); sfx.flip(); say(it.n);
+  if(!M.first){ M.first=c; return; }
+  const a=M.first; M.first=null; M.lock=true;
+  if(a.dataset.id===c.dataset.id){
+    setTimeout(()=>{ a.classList.add('matched'); c.classList.add('matched'); sfx.good(); M.matched++; M.lock=false;
+      if(M.matched===M.pairs) setTimeout(()=>win({msg:'You found every pair! What a great memory.', speak:'Ka pai! You found all the pairs!', again:startMemory}),600);
+      else say(`Two ${it.n}s! A match!`);
+    },500);
+  } else {
+    setTimeout(()=>{ a.classList.remove('up'); c.classList.remove('up');
+      a.setAttribute('aria-label','Card, face down'); c.setAttribute('aria-label','Card, face down'); M.lock=false; },1300);
+  }
+}
+
+/* ================= BONUS 3: COUNT THE CANS ================= */
+let C=null;
+const CAN_COLOURS=[['#E23B3B','#fff'],['#2F7DD1','#FFC93C'],['#2E9E5B','#fff'],['#F5B800','#D7263D'],['#8E4FD6','#fff']];
+function startCount(){
+  show('count');
+  const n = state.level==='little'?5:10;
+  C={n, counted:0, busy:false};
+  $('#countNum').textContent='0'; $('#countReo').textContent='Tap a can!';
+  $('#cans').innerHTML = Array.from({length:n},(_,i)=>{ const [c,s]=CAN_COLOURS[i%CAN_COLOURS.length];
+    return `<button class="can" aria-label="Can">${can(c,s)}</button>`; }).join('');
+  $$('#cans .can').forEach(b=>b.onclick=()=>squish(b));
+  say('Squish the cans so more fit in the recycling truck! Tap each can and count in English and te reo Māori.');
+}
+function squish(b){
+  if(!C || b.classList.contains('crushed')) return;
+  C.counted++; const k=C.counted;
+  b.classList.add('crushed'); sfx.crunch();
+  b.insertAdjacentHTML('beforeend', `<span class="n">${k}</span>`);
+  b.setAttribute('aria-label', `Can number ${k}`);
+  $('#countNum').textContent=k; $('#countReo').innerHTML=`${EN[k-1]}<br>${REO[k-1]}`;
+  const p = say(k===C.n ? 'All squished! Ka pai!' : 'Keep squishing!');
+  if(k===C.n){
+    p.then(()=>win({msg:`You squished and counted ${C.n} cans. ${C.n===10?'Tekau!':'Rima!'}`,
+      speak:`Ka pai! You counted to ${EN[C.n-1]}. ${REO[C.n-1]}!`, again:startCount}));
+  }
+}
+
+/* ================= STICKER BOOK ================= */
+function startStickers(){
+  show('stickers');
+  const got=Math.min(state.stickers,STICKERS.length);
+  $('#stickMsg').textContent = got===0 ? 'Finish any game to win your first Wellington sticker!' :
+    got===STICKERS.length ? 'You found every Wellington sticker. Ka mau te wehi!' : `You have ${got} of ${STICKERS.length} stickers. Keep playing to find them all!`;
+  $('#stickGrid').innerHTML = STICKERS.map((s,i)=> i<got
+    ? `<button class="sticker" data-say="${s.n}"><span class="e">${s.e}</span><small>${s.n}</small></button>`
+    : `<div class="sticker locked" aria-label="Locked sticker"><span class="e">${s.e}</span><small>?</small></div>`).join('');
+  $$('#stickGrid [data-say]').forEach(b=>b.onclick=()=>sfx.pop());
+}
+
+const START = { sort:startSort, beach:startBeach, memory:startMemory, count:startCount, stickers:startStickers };
+
+/* ================= Boot ================= */
+$('#heroScene').innerHTML = scene('h');
+$('#homePip').innerHTML = PIP;
+$$('[data-pip]').forEach(p=>p.innerHTML=PIP);
+(function title(){
+  const cols=['#D7263D','#F5B800','#2E8B57','#2F7DD1','#8E4FD6','#EE6A12','#7A4E2D','#1F9D55'];
+  let k=0;
+  $('#bigTitle').innerHTML = ['Recycling','Challenge'].map(w=>`<span class="w">${[...w].map(ch=>`<span style="color:${cols[k++%cols.length]}">${ch}</span>`).join('')}</span>`).join(' ');
+})();
+syncSound();
+syncMusic();
+renderHome();
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#win').hidden) show('home'); });
+</script>
+</body>
+</html>
