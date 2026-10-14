@@ -271,7 +271,7 @@ svg{display:block}
 
     <details class="grownups">
       <summary>For grown-ups</summary>
-      <p>This game is inspired by the hands-on <a href="https://www.wellingtonrecycles.co.nz/" target="_blank" rel="noopener">Wellington Recycling Challenge</a> at Kilbirnie Library, where tamariki sort real (clean) items onto a mat under eight charts: Landfill, Plastics, Metals, Paper &amp; Cardboard, Glass, Soft Plastics, Lids + Caps and Compost.</p>
+      <p>This game is inspired by the hands-on <a href="https://www.wellingtonrecycles.co.nz/" target="_blank" rel="noopener">Wellington Recycling Challenge</a>, where tamariki sort items into the correct bins: e.g Landfill, Plastics, Paper & Cardboard, Glass, Soft Plastics, Lids + Caps and Compost.</p>
       <ul>
         <li><b>Wiggly Worms</b> (age 2-3) uses four bins and fewer items. <b>Bin Buddies</b> (age 3-4) uses all eight charts, just like the real mat.</li>
         <li>Pip's messages appear as text, so younger children will need a grown-up to read along. Kids can drag an item to a bin or just tap the bin. Wrong guesses are gentle: after two tries, the right bin glows.</li>
@@ -410,11 +410,11 @@ const ART = {
 const CATS = {
   landfill:{name:'Landfill',       say:'landfill',             c:'#4A4A55', t:'#fff', icon:'🗑️'},
   plastics:{name:'Plastics',       say:'plastics',             c:'#F5B800', t:'#2A1F00', icon:'♻️'},
-  metals:  {name:'Metals',         say:'metals',               c:'#6F8499', t:'#fff', icon:'🥫'},
+  metals:  {name:'Cans',         say:'Metals',               c:'#6F8499', t:'#fff', icon:'🥫'},
   paper:   {name:'Paper & Cardboard', say:'paper and cardboard', c:'#2F7DD1', t:'#fff', icon:'📰'},
   glass:   {name:'Glass',          say:'glass',                c:'#1F9D55', t:'#fff', icon:'🍾'},
   soft:    {name:'Soft Plastics',  say:'soft plastics',        c:'#8E4FD6', t:'#fff', icon:'🛍️'},
-  lids:    {name:'Lids + Caps',    say:'lids and caps',        c:'#EE6A12', t:'#fff', art:'blueCap'},
+  lids:    {name:'Lids & Caps',    say:'lids & caps',        c:'#EE6A12', t:'#fff', art:'blueCap'},
   compost: {name:'Compost',        say:'compost',              c:'#7A4E2D', t:'#fff', icon:'🪱'}
 };
 const ORDER = {
@@ -435,7 +435,7 @@ const ITEMS = [
   {n:'envelope',cat:'paper',e:'✉️',tip:'Paper envelopes can be recycled.'},
   {n:'water bottle',cat:'plastics',a:'waterBottle',tip:'Take the lid off first, then recycle the bottle.'},
   {n:'milk bottle',cat:'plastics',a:'milkBottle',tip:'Give it a rinse and take the lid off.'},
-  {n:'yoghurt pottle',cat:'plastics',a:'yoghurt',tip:'Give the pottle a rinse first.'},
+  {n:'yoghurt pot',cat:'plastics',a:'yoghurt',tip:'Give the pot a rinse first.'},
   {n:'shampoo bottle',cat:'plastics',e:'🧴',tip:'Empty bottles go in plastics.'},
   {n:'tin can',cat:'metals',e:'🥫',tip:'Rinse the tin, then recycle it.'},
   {n:'fizzy drink can',cat:'metals',a:'sodaCan',tip:'Old cans can be made into new cans!'},
